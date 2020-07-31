@@ -71,7 +71,7 @@ class CIFAR10_SUB(CIFAR10):
     
 def test_CIFAR10_SUB():
   # Step 1. Initiate a dataset object:
-  subset = CIFAR10_SUB(root='./cifar10/data', train=True, download=True)
+  subset = CIFAR10_SUB(root='/content/drive/My Drive/cifar10/data', train=True, download=True)
 
   Xtrain, ytrain = subset.get_data()
   print("Before transformation: ")
