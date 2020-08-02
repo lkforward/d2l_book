@@ -101,3 +101,60 @@ def test_CIFAR10_SUB():
                                           shuffle=False, num_workers=2)
   
   return
+
+
+
+def runner(model, train_dataloader, valid_dataloader, 
+           optimizer, scheduler, criterion, 
+           # metrics,
+           n_epochs, print_every_minibatch=200):
+  loss_train = []
+  loss_valid = []
+  metrics_train = {}
+  metrics_valid = {}
+
+  for i in range(n_epochs):
+    ######################################
+    # Part 1. Train the model
+    # NOTE: Here train() only set the mode; not training yet. 
+    ######################################
+    model.train() 
+
+    loss = 0.0
+    for j, (data, target) in enumerate(train_dataloader):
+      optimizer.zero_grad()
+      y = model(data)
+      L = criterion(y, target)
+      L.backward()
+      optimizer.step()
+
+      loss += L.item() * data.size(0)
+      if j % print_every_minibatch == (print_every_minibatch - 1):
+        print("Loss in minibatch {}: {}".format(j, L.item()))
+
+    epoch_loss = loss / len(train_dataloader.dataset)
+    loss_train.append(epoch_loss)
+    print("The training loss of {} data samples in epoch {}: {}".format(len(train_dataloader.dataset), i, epoch_loss))
+
+    ######################################
+    # Part 2. Evaluate on the validation dataset
+    ######################################
+    # Set the evaluation mode so no batchnorm, dropoff, etc. 
+    model.eval()
+    del data, target
+
+    loss = 0.0
+    # no_grad() turn off the augograd engine, so no gradient propagation. 
+    with torch.no_grad():
+      for j, (data, target) in enumerate(valid_dataloader):
+        y = model(data)
+        L = criterion(y, target)
+        loss += L * data.size(0)
+
+    epoch_loss = loss / len(valid_dataloader.dataset)
+    loss_valid.append(epoch_loss)
+    print("The training loss of {} data samples in epoch {}: {}".format(len(valid_dataloader.dataset), i, epoch_loss))
+    # Check the stopping criterion based on the validation loss
+    scheduler.step(loss)
+  
+  return loss_train, loss_valid, metrics_train, metrics_valid
