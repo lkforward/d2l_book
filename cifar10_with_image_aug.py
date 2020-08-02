@@ -103,15 +103,14 @@ def test_CIFAR10_SUB():
   return
 
 
-
 def runner(model, train_dataloader, valid_dataloader, 
            optimizer, scheduler, criterion, 
            # metrics,
            n_epochs, print_every_minibatch=200):
   loss_train = []
   loss_valid = []
-  metrics_train = {}
-  metrics_valid = {}
+  acc_train = []
+  acc_valid = []
 
   for i in range(n_epochs):
     ######################################
@@ -121,6 +120,8 @@ def runner(model, train_dataloader, valid_dataloader,
     model.train() 
 
     loss = 0.0
+    acc = 0.0
+    total_train, correct_train = 0, 0
     for j, (data, target) in enumerate(train_dataloader):
       optimizer.zero_grad()
       y = model(data)
@@ -131,10 +132,20 @@ def runner(model, train_dataloader, valid_dataloader,
       loss += L.item() * data.size(0)
       if j % print_every_minibatch == (print_every_minibatch - 1):
         print("Loss in minibatch {}: {}".format(j, L.item()))
+      
+      _, predicted = torch.max(y.data, 1)
+      # print(y.data)
+      # print(predicted)
+      total_train += target.size(0)
+      correct_train += (predicted == target).sum().item()
 
     epoch_loss = loss / len(train_dataloader.dataset)
     loss_train.append(epoch_loss)
     print("The training loss of {} data samples in epoch {}: {}".format(len(train_dataloader.dataset), i, epoch_loss))
+
+    acc = correct_train / total_train
+    print("The training accuracy in epoch {}: {}".format(i, acc))
+    acc_train.append(acc)
 
     ######################################
     # Part 2. Evaluate on the validation dataset
@@ -144,17 +155,27 @@ def runner(model, train_dataloader, valid_dataloader,
     del data, target
 
     loss = 0.0
+    total_valid, correct_valid = 0, 0
     # no_grad() turn off the augograd engine, so no gradient propagation. 
     with torch.no_grad():
       for j, (data, target) in enumerate(valid_dataloader):
         y = model(data)
         L = criterion(y, target)
-        loss += L * data.size(0)
+        loss += L.item() * data.size(0)
+
+        _, predicted = torch.max(y.data, 1)
+        total_valid += target.size(0)
+        correct_valid += (predicted == target).sum().item()
 
     epoch_loss = loss / len(valid_dataloader.dataset)
     loss_valid.append(epoch_loss)
-    print("The training loss of {} data samples in epoch {}: {}".format(len(valid_dataloader.dataset), i, epoch_loss))
+    print("The validation loss of {} data samples in epoch {}: {}".format(len(valid_dataloader.dataset), i, epoch_loss))
+
+    acc = correct_valid / total_valid
+    print("The validation accuracy in epoch {}: {}".format(i, acc))
+    acc_valid.append(acc)
+
     # Check the stopping criterion based on the validation loss
     scheduler.step(loss)
   
-  return loss_train, loss_valid, metrics_train, metrics_valid
+  return loss_train, loss_valid, acc_train, acc_valid
