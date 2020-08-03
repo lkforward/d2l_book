@@ -145,7 +145,7 @@ def runner(model, train_dataloader, valid_dataloader,
     print("{} data samples, training loss = {}".format(len(train_dataloader.dataset), epoch_loss))
 
     acc = correct_train / total_train
-    print("training accuracy = {}".format(acc))
+    # print("training accuracy = {}".format(acc))
     acc_train.append(acc)
 
     ######################################
@@ -173,7 +173,7 @@ def runner(model, train_dataloader, valid_dataloader,
     print("{} data samples, validation loss = {}".format(len(valid_dataloader.dataset), epoch_loss))
 
     acc = correct_valid / total_valid
-    print("valid accuracy = {}".format(acc))
+    # print("valid accuracy = {}".format(acc))
     acc_valid.append(acc)
 
     # Check the stopping criterion based on the validation loss
